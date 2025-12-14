@@ -6,13 +6,6 @@ const MONGODB_URI = process.env.DATABASE_URL!;
 // connect to connection string (NEVER USE ACTUAL STRING, USE VARIABLE NAME)
 mongoose.connect(MONGODB_URI);
 
-// Project Name
-// Start Date
-// End Date
-// Description
-// Deployment Link
-// Github Link
-
 // create schema
 const projectSchema = new Schema({
   // String is shorthand for { type: String }
