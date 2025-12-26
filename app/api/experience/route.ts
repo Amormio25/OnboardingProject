@@ -8,20 +8,39 @@ import exp from "constants";
 const objectIdSchema = z
   .string()
   .regex(/^[0-9a-fA-F]{24}$/, "Invalid MongoDB ObjectId");
-async function GET(request: Request) {
+const experienceValidationSchema = z.object({
+  company: z.string().min(1),
+  title: z.string().min(1),
+  location: z.string().optional(),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Expected YYYY-MM-DD.")
+    .optional(),
+  endDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Expected YYYY-MM-DD.")
+    .optional(),
+  description: z.string().optional(),
+});
+
+async function connect() {
   try {
     await connectToDatabase();
   } catch {
     return NextResponse.json(
       { success: false, message: "Error with connecting to database." },
-      { status: 500 } // code for internal db/server-side error
+      { status: 500 }
     );
   }
+}
+
+async function GET(request: Request) {
+  const connectionResponse = await connect();
+  if (connectionResponse) return connectionResponse;
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
 
-  // get experience by id
   if (id) {
     const parsedId = objectIdSchema.safeParse(id);
     if (!parsedId.success) {
@@ -49,7 +68,8 @@ async function GET(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Error retrieving experience from the database.",
+          message:
+            "Error occurred while retrieving experience from the database.",
         },
         { status: 500 }
       );
@@ -61,40 +81,22 @@ async function GET(request: Request) {
     const experiences = await Experience.find();
     return NextResponse.json(
       { success: true, data: experiences },
-      { status: 200 } // code for empty collection
+      { status: 200 }
     );
   } catch {
     return NextResponse.json(
-      { success: false, message: "Error retrieving experiences from database" },
-      { status: 500 } // code for internal db/server-side
+      {
+        success: false,
+        message: "Error occurred while retrieving experiences from database",
+      },
+      { status: 500 }
     );
   }
 }
 
-const experienceValidationSchema = z.object({
-  company: z.string().min(1),
-  title: z.string().min(1),
-  location: z.string().optional(),
-  startDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Expected YYYY-MM-DD.")
-    .optional(),
-  endDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Expected YYYY-MM-DD.")
-    .optional(),
-  description: z.string().optional(),
-});
-
 async function POST(request: Request) {
-  try {
-    await connectToDatabase();
-  } catch {
-    return NextResponse.json(
-      { success: false, message: "Error with connecting to database." },
-      { status: 500 } // code for internal db/server-side error
-    );
-  }
+  const connectionResponse = await connect();
+  if (connectionResponse) return connectionResponse;
 
   const body = await request.json();
   const parsedBody = experienceValidationSchema.safeParse(body);
@@ -108,6 +110,7 @@ async function POST(request: Request) {
       { status: 400 }
     );
   }
+
   try {
     const experience = await Experience.create(parsedBody.data);
     return NextResponse.json(
@@ -131,4 +134,63 @@ async function POST(request: Request) {
     );
   }
 }
-export { GET, POST };
+
+async function PUT(request: Request) {
+  const connectionResponse = await connect();
+  if (connectionResponse) return connectionResponse;
+
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+  const body = await request.json();
+
+  const validator = z.object({
+    id: objectIdSchema,
+    update: experienceValidationSchema.partial(),
+  });
+  const parsedRequest = validator.safeParse({ id: id, update: body });
+  if (!parsedRequest.success) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid request body.",
+        errors: parsedRequest.error.format(),
+      },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const updatedExperience = await Experience.findByIdAndUpdate(
+      parsedRequest.data.id,
+      parsedRequest.data.update,
+      { new: true, runValidators: true }
+    );
+    if (!updatedExperience) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Experience not found",
+        },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(
+      {
+        success: true,
+        data: updatedExperience,
+        message: "Experience successfully updated.",
+      },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Error occurred while updating the experience.",
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export { GET, POST, PUT };
