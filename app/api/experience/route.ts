@@ -48,6 +48,7 @@ async function GET(request: Request) {
         {
           success: false,
           message: "Invalid ID format. Must be a valid MongoDB ObjectId.",
+          errors: parsedId.error.format(),
         },
         { status: 400 }
       );
@@ -186,11 +187,59 @@ async function PUT(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        message: "Error occurred while updating the experience.",
+        message: "Error occurred while updating experience.",
       },
       { status: 500 }
     );
   }
 }
 
-export { GET, POST, PUT };
+async function DELETE(request: Request) {
+  const connectionResponse = await connect();
+  if (connectionResponse) return connectionResponse;
+
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+
+  if (!id) {
+    return NextResponse.json(
+      { success: false, message: "Missing 'id' query parameter." },
+      { status: 400 }
+    );
+  }
+
+  const parsedId = objectIdSchema.safeParse(id);
+  if (!parsedId.success) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid ID format. Must be a valid MongoDB ObjectId.",
+        errors: parsedId.error.format(),
+      },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const experience = await Experience.findByIdAndDelete(parsedId.data);
+    if (!experience) {
+      return NextResponse.json(
+        { success: false, message: "Experience not found." },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Experience successfully deleted.",
+      },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, message: "Error occurred while deleting experience." },
+      { status: 500 }
+    );
+  }
+}
+export { GET, POST, PUT, DELETE };
