@@ -10,15 +10,17 @@ mongoose.connect(MONGODB_URI);
 const projectSchema = new Schema({
   // String is shorthand for { type: String }
   // can do this when property only requires a type, unlike date
-  name: String,
-  startDate: { type: Date, default: Date.now },
-  endDate: { type: Date, default: Date.now },
+  name: { type: String, required: true },
+  startDate: { type: Date, required: true },
+  endDate: { type: Date },
   description: String,
   deploymentLink: String,
   githubLink: String,
 });
 
+projectSchema.index({ name: 1, startDate: 1 }, { unique: true });
+
 // create model, similar to making object using a class ctor
-const Project = model("Project", projectSchema);
+const Project = mongoose.models.Project || model("Project", projectSchema);
 
 export default Project;
