@@ -1,9 +1,7 @@
 import Experience from "@/models/Experience";
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongoose";
-import { success, z } from "zod";
-import { parse } from "path";
-import exp from "constants";
+import { z } from "zod";
 
 const objectIdSchema = z
   .string()
@@ -88,7 +86,7 @@ async function GET(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        message: "Error occurred while retrieving experiences from database",
+        message: "Error occurred while retrieving experiences from database.",
       },
       { status: 500 }
     );
