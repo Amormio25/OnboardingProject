@@ -1,10 +1,24 @@
 import Image from "next/image";
+import ExperiencePage from "./api/experience/page";
 
 export default function Home() {
   return (
     <div className="h-screen w-screen overflow-auto bg-gray-50 sm:overflow-hidden md:overflow-hidden">
+      <div className="h-16 w-screen bg-slate-700 absolute flex justify-center items-center">
+        <div className="text-white text-lg gap-4 flex font-semibold width: calc(0.5 * 100%);">
+          <span className="hover:font-semibold hover:cursor-pointer hover:bg-slate-800 p-2 rounded-md">
+            Home
+          </span>
+          <span className="hover:font-semibold hover:cursor-pointer hover:bg-slate-800 p-2 rounded-md">
+            Experiences
+          </span>
+          <span className="hover:font-semibold hover:cursor-pointer hover:bg-slate-800 p-2 rounded-md">
+            Projects
+          </span>
+        </div>
+      </div>
       <div className="m-8 flex h-[calc(100%-4rem)] w-[calc(100%-4rem)] flex-col items-center justify-center overflow-auto rounded-xl border bg-white p-8 pt-16 shadow-lg sm:overflow-hidden md:overflow-hidden">
-        <h1 className="mb-4 pt-8 text-3xl font-semibold md:pt-0 md:text-5xl">
+        <h1 className="mt-12 mb-2 text-3xl font-semibold md:pt-0 md:text-5xl">
           About Me
         </h1>
         <h3 className="text-lg md:text-xl">Hi, I'm Amormio!</h3>
@@ -35,5 +49,8 @@ export default function Home() {
         </div>
       </div>
     </div>
+    // <div>
+    //   <ExperiencePage />
+    // </div>
   );
 }
